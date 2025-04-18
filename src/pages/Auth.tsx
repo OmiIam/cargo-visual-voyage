@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
@@ -41,6 +41,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   // Login form
@@ -64,19 +65,48 @@ const Auth = () => {
   });
 
   // Handle login submission
-  const onLoginSubmit = (values: LoginFormValues) => {
-    // For now just simulate a successful login
-    console.log("Login attempt:", values);
-    toast.success("Login successful");
-    navigate("/dashboard");
+  const onLoginSubmit = async (values: LoginFormValues) => {
+    try {
+      setIsLoading(true);
+      const { error } = await supabase.auth.signInWithPassword({
+        email: values.email,
+        password: values.password,
+      });
+
+      if (error) throw error;
+
+      toast.success("Login successful");
+      navigate("/dashboard");
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Handle registration submission
-  const onRegisterSubmit = (values: RegisterFormValues) => {
-    // For now just simulate a successful registration
-    console.log("Registration attempt:", values);
-    toast.success("Account created successfully");
-    navigate("/dashboard");
+  const onRegisterSubmit = async (values: RegisterFormValues) => {
+    try {
+      setIsLoading(true);
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            company_name: values.companyName,
+          },
+        },
+      });
+
+      if (signUpError) throw signUpError;
+
+      toast.success("Registration successful! Please check your email to verify your account.");
+      setIsLogin(true);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -157,8 +187,12 @@ const Auth = () => {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full bg-gradient hover:opacity-90">
-                    Login
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-gradient hover:opacity-90"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Logging in..." : "Login"}
                   </Button>
                 </form>
               </Form>
@@ -217,8 +251,12 @@ const Auth = () => {
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full bg-gradient hover:opacity-90">
-                    Create Account
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-gradient hover:opacity-90"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? "Creating account..." : "Create Account"}
                   </Button>
                 </form>
               </Form>
