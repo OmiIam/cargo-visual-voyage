@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -27,14 +26,19 @@ const loginSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
+// Improved email validation regex
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const registerSchema = z
   .object({
-    email: z.string().email("Please enter a valid email address"),
+    email: z.string()
+      .min(1, "Email is required")
+      .regex(emailRegex, "Please enter a valid email address"),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
     companyName: z.string().optional(),
   })
-  .refine((data) => data.password === data.confirmPassword, {
+  .refine((data) => data.password.trim() === data.confirmPassword.trim(), {
     message: "Passwords do not match",
     path: ["confirmPassword"],
   });
@@ -46,6 +50,18 @@ const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkUser = async () => {
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        navigate("/dashboard");
+      }
+    };
+    
+    checkUser();
+  }, [navigate]);
 
   // Login form
   const loginForm = useForm<LoginFormValues>({
@@ -83,30 +99,36 @@ const Auth = () => {
       toast.success("Login successful");
       navigate("/dashboard");
     } catch (error) {
-      toast.error(error.message);
+      console.error("Login error:", error);
+      toast.error(error.message || "Failed to log in. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle registration submission
+  // Handle registration submission with improved error handling
   const onRegisterSubmit = async (values: RegisterFormValues) => {
     try {
       setIsLoading(true);
-      const { error: signUpError } = await supabase.auth.signUp({
+      const { error: signUpError, data } = await supabase.auth.signUp({
         email: values.email,
         password: values.password,
         options: {
           data: {
-            company_name: values.companyName,
+            company_name: values.companyName || null,
           },
         },
       });
 
       if (signUpError) throw signUpError;
 
-      toast.success("Registration successful! Please check your email to verify your account.");
-      setIsLogin(true);
+      if (data?.user?.identities?.length === 0) {
+        // User already exists but not through external provider
+        toast.error("An account with this email already exists. Please log in instead.");
+      } else {
+        toast.success("Registration successful! Please check your email to verify your account.");
+        setIsLogin(true);
+      }
     } catch (error) {
       console.error("Registration error:", error);
       toast.error(error.message || "Registration failed. Please try again.");
@@ -174,7 +196,7 @@ const Auth = () => {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input placeholder="youremail@example.com" {...field} />
+                          <Input placeholder="youremail@example.com" {...field} autoComplete="email" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -187,7 +209,7 @@ const Auth = () => {
                       <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
+                          <Input type="password" placeholder="••••••••" {...field} autoComplete="current-password" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
