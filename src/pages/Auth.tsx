@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
@@ -26,15 +27,17 @@ const loginSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
-const registerSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
-  companyName: z.string().optional(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords do not match",
-  path: ["confirmPassword"],
-});
+const registerSchema = z
+  .object({
+    email: z.string().email("Please enter a valid email address"),
+    password: z.string().min(6, "Password must be at least 6 characters"),
+    confirmPassword: z.string().min(6, "Password must be at least 6 characters"),
+    companyName: z.string().optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
@@ -51,6 +54,7 @@ const Auth = () => {
       email: "",
       password: "",
     },
+    mode: "onChange", // Validate on change for better user experience
   });
 
   // Register form
@@ -62,6 +66,7 @@ const Auth = () => {
       confirmPassword: "",
       companyName: "",
     },
+    mode: "onChange", // Validate on change for better user experience
   });
 
   // Handle login submission
@@ -103,7 +108,8 @@ const Auth = () => {
       toast.success("Registration successful! Please check your email to verify your account.");
       setIsLogin(true);
     } catch (error) {
-      toast.error(error.message);
+      console.error("Registration error:", error);
+      toast.error(error.message || "Registration failed. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -206,7 +212,7 @@ const Auth = () => {
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input placeholder="youremail@example.com" {...field} />
+                          <Input placeholder="youremail@example.com" {...field} autoComplete="email" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -219,7 +225,12 @@ const Auth = () => {
                       <FormItem>
                         <FormLabel>Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
+                          <Input 
+                            type="password" 
+                            placeholder="••••••••" 
+                            {...field} 
+                            autoComplete="new-password" 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -232,7 +243,12 @@ const Auth = () => {
                       <FormItem>
                         <FormLabel>Confirm Password</FormLabel>
                         <FormControl>
-                          <Input type="password" placeholder="••••••••" {...field} />
+                          <Input 
+                            type="password" 
+                            placeholder="••••••••" 
+                            {...field} 
+                            autoComplete="new-password" 
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
