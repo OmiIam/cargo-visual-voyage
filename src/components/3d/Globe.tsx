@@ -24,6 +24,13 @@ const GlobeMesh = () => {
     opacity: 0.9,
   });
 
+  const wireframeMaterial = new THREE.MeshStandardMaterial({
+    color: "#9b87f5",
+    wireframe: true,
+    transparent: true,
+    opacity: 0.1,
+  });
+
   return (
     <>
       {/* Ambient light for base illumination */}
@@ -40,15 +47,11 @@ const GlobeMesh = () => {
       <pointLight position={[-5, -5, -5]} intensity={0.4} color="#7E69AB" />
       <pointLight position={[5, -5, 5]} intensity={0.4} color="#6E59A5" />
 
-      {/* Globe mesh */}
-      <Sphere ref={meshRef} args={[1, 64, 64]} material={material}>
-        <meshStandardMaterial
-          wireframe
-          color="#9b87f5"
-          transparent
-          opacity={0.1}
-        />
-      </Sphere>
+      {/* Main sphere with material */}
+      <Sphere ref={meshRef} args={[1, 64, 64]} material={material} />
+      
+      {/* Wireframe overlay sphere */}
+      <Sphere args={[1.01, 32, 32]} material={wireframeMaterial} />
     </>
   );
 };
