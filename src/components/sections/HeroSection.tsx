@@ -1,6 +1,6 @@
 
 import { Button } from "@/components/ui/button";
-import { Globe } from "lucide-react";
+import Globe from "../3d/Globe";
 
 export default function HeroSection() {
   return (
@@ -46,7 +46,7 @@ export default function HeroSection() {
         <div className="relative flex justify-center opacity-0 animate-fade-in-delay-1">
           <div className="absolute inset-0 bg-logistics-accent/10 rounded-full blur-3xl"></div>
           <div className="relative z-10 w-64 h-64 md:w-80 md:h-80">
-            <Globe className="w-full h-full text-logistics-highlight/80 animate-globe-slow" />
+            <Globe />
             <div className="absolute inset-0 bg-gradient-to-tr from-logistics-accent/0 to-logistics-highlight/30 rounded-full blur-md"></div>
           </div>
         </div>
