@@ -17,7 +17,7 @@ const GlobeMesh = () => {
   });
 
   // Additional subtle rotation on frame update
-  useFrame((state) => {
+  useFrame(() => {
     if (meshRef.current) {
       meshRef.current.rotation.y += 0.001; // Slower, smoother rotation
     }
